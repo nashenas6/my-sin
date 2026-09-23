@@ -1,4 +1,61 @@
 {
-  "jobs": [],
-  "updated_at": "2026-09-22T00:54:41.127529+00:00"
+  "jobs": [
+    {
+      "id": "c144cc3d1064",
+      "name": "h-dashboard progress reporter",
+      "prompt": "",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": "h-dashboard-progress.sh",
+      "no_agent": true,
+      "monitor_script": null,
+      "monitor_url": null,
+      "monitor_state": null,
+      "context_from": null,
+      "schedule": {
+        "kind": "interval",
+        "minutes": 6,
+        "display": "every 6m"
+      },
+      "schedule_display": "every 6m",
+      "repeat": {
+        "times": null,
+        "completed": 34
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-09-23T08:51:32.284043+00:00",
+      "next_run_at": "2026-09-23T12:55:21.993436+00:00",
+      "last_run_at": "2026-09-23T12:49:21.993436+00:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "last_delivery_unverified": null,
+      "failure_streak": 0,
+      "deliver": "origin",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "100651143",
+        "chat_name": "M A",
+        "thread_id": null,
+        "user_id": "100651143",
+        "scope_id": null
+      },
+      "enabled_toolsets": null,
+      "workdir": "/home/runner/h-dashboard",
+      "last_dispatch": {
+        "scheduled_at": "2026-09-23T12:48:22.000834+00:00",
+        "dispatched_at": "2026-09-23T12:49:20.482805+00:00",
+        "lateness_seconds": 58.5,
+        "kind": "on_time"
+      },
+      "fire_claim": null
+    }
+  ],
+  "updated_at": "2026-09-23T12:49:21.994889+00:00"
 }

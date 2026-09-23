@@ -90,6 +90,16 @@ PHP code changes, test writing, and API resource transformers.
       $model->update(['user_id' => Auth::id()]);
   }
   ```
+- **Verify test count after appending test blocks.** After a patch that
+  adds `it(...)`/`test(...)` blocks, grep the test names (`grep -c
+  "^it('" <file>`) before running. A duplicated anchor match silently
+  appends a second copy of the block set, and Pest then reports
+  duplicate test names.
+- **`str_replace` escape order: backslash first.** When escaping symbols
+  with backslash escapes (LIKE `%`/`_`, regex, CSV), list `'\\'` first
+  in both the search and replacement arrays. `str_replace` processes
+  pairs left to right — escaping `%` before `\` double-escapes the
+  backslashes just added. The escape character always goes first.
 
 ## Merge Conflicts in Auto-Generated Files
 

@@ -8,6 +8,7 @@
 | Validate ISO 8601 dates | `DateTimeImmutable::createFromFormat(ATOM, $str)` | `strtotime($str)` — flexible, handles `.000000Z` suffix |
 | Assert factory nullable field | `'icon' => null` on NOT NULL column | Use column default: `'icon' => 'o-bell'` |
 | Generate optional JSON data | `fake()->passthrough()` | `fake()->words(3)` — passthrough requires a value argument |
+| Test middleware on redirect responses | HTTP request asserting headers on a redirect (`$this->get('/')` + `assertHeader`) — globally-appended `web` middleware never runs when the redirect is issued earlier in the stack, so the header assertion fails | Instantiate the middleware directly with a redirect response: `$middleware->handle($request, fn ($req) => redirect('/login'))`, then assert on `$response->headers` |
 
 ## PHPStan Patterns for Laravel/Livewire
 

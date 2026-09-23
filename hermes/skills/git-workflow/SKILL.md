@@ -20,8 +20,26 @@ Pitfalls and procedures for everyday git operations that fall outside standard
 - Always check `git status` and `git remote -v` before staging or pushing.
 - Configure per-repo identity before first commit if global config is absent.
 - Never assume a branch name — read it from `git branch --show-current`.
+- On fork/dual-remote repos, verify all three sync points before work: local branch, its tracking branch, and the canonical upstream branch — a clean `git status` alone hides upstream drift.
 
 ## Pitfalls
+
+### Tri-branch sync check on fork/dual-remote repos
+
+`git status` only compares the local branch against its tracking branch; it says nothing about the canonical upstream. Check all three, or work starts from a stale base.
+
+```bash
+git branch -vv                                        # which remote each local branch tracks
+git config --get-regexp 'branch\.<name>\.'           # confirm tracking ref (merge = refs/heads/<branch>)
+git rev-list --left-right --count local...origin/branch      # local vs fork
+ git rev-list --left-right --count origin/branch...upstream/branch  # fork vs canonical
+```
+
+Read the two numbers as ahead/behind in the listed order. A non-zero behind count against upstream means fetch-then-merge before branching new work.
+
+### Conflicting branch directives — stop and ask
+
+When standing instructions say stay on and push the current branch but a plan doc says one branch per plan, surface the conflict and ask before creating branches or worktrees — unapproved isolation strands commits off the branch the user expects pushed.
 
 ### Nested `.git` directories when copying content
 
