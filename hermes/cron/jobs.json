@@ -23,20 +23,20 @@
       "schedule_display": "every 6m",
       "repeat": {
         "times": null,
-        "completed": 34
+        "completed": 84
       },
       "enabled": true,
       "state": "scheduled",
       "paused_at": null,
       "paused_reason": null,
       "created_at": "2026-09-23T08:51:32.284043+00:00",
-      "next_run_at": "2026-09-23T12:55:21.993436+00:00",
-      "last_run_at": "2026-09-23T12:49:21.993436+00:00",
-      "last_status": "ok",
-      "last_error": null,
+      "next_run_at": "2026-09-26T12:34:04.305382+00:00",
+      "last_run_at": "2026-09-26T12:28:04.305382+00:00",
+      "last_status": "error",
+      "last_error": "Script not found: /home/runner/.hermes/scripts/h-dashboard-progress.sh. Cron scripts are looked up only in this profile's folder (/home/runner/.hermes/scripts); if the job was copied from another profile, copy the script there too, or edit the job with `hermes cron edit`.",
       "last_delivery_error": null,
       "last_delivery_unverified": null,
-      "failure_streak": 0,
+      "failure_streak": 50,
       "deliver": "origin",
       "origin": {
         "platform": "telegram",
@@ -49,13 +49,13 @@
       "enabled_toolsets": null,
       "workdir": "/home/runner/h-dashboard",
       "last_dispatch": {
-        "scheduled_at": "2026-09-23T12:48:22.000834+00:00",
-        "dispatched_at": "2026-09-23T12:49:20.482805+00:00",
-        "lateness_seconds": 58.5,
+        "scheduled_at": "2026-09-26T12:27:04.308465+00:00",
+        "dispatched_at": "2026-09-26T12:28:04.265382+00:00",
+        "lateness_seconds": 60.0,
         "kind": "on_time"
       },
       "fire_claim": null
     }
   ],
-  "updated_at": "2026-09-23T12:49:21.994889+00:00"
+  "updated_at": "2026-09-26T12:28:04.306134+00:00"
 }
