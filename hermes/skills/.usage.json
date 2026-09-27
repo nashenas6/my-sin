@@ -97,14 +97,14 @@
     "created_by": null,
     "last_patched_at": null,
     "last_reused_patch_generation": 0,
-    "last_used_at": "2026-09-26T08:48:53.926228+00:00",
-    "last_viewed_at": "2026-09-26T08:48:53.925220+00:00",
+    "last_used_at": "2026-09-27T09:55:02.717344+00:00",
+    "last_viewed_at": "2026-09-27T09:55:02.713033+00:00",
     "patch_count": 0,
     "patch_generation": 0,
     "pinned": false,
     "state": "active",
-    "use_count": 7,
-    "view_count": 7
+    "use_count": 9,
+    "view_count": 9
   },
   "improve-workflows": {
     "archived_at": null,
@@ -145,14 +145,14 @@
     "first_seen_at": null,
     "last_patched_at": null,
     "last_reused_patch_generation": 0,
-    "last_used_at": "2026-09-26T08:43:28.150082+00:00",
-    "last_viewed_at": "2026-09-26T08:43:28.148538+00:00",
+    "last_used_at": "2026-09-27T09:55:02.718836+00:00",
+    "last_viewed_at": "2026-09-27T09:55:02.715939+00:00",
     "patch_count": 0,
     "patch_generation": 0,
     "pinned": false,
     "state": "active",
-    "use_count": 3,
-    "view_count": 3
+    "use_count": 4,
+    "view_count": 4
   },
   "recurring-progress-reports": {
     "archived_at": null,
