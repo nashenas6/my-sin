@@ -115,6 +115,57 @@ Closes #42"
 
 Options: `--draft`, `--reviewer user1,user2`, `--label "enhancement"`, `--base develop`
 
+#### Targeting a base repo you don't own (cross-fork / canonical-upstream PRs)
+
+When the work lands on a personal fork but merges upstream, `owner/repo` is the
+UPSTREAM and `head` must carry the fork's owner:
+
+```bash
+# WRONG — GitHub cannot tell which repo owns "reyhane"; PR creation fails or
+# silently targets the fork's own beta.
+gh pr create -R upstream/repo --base beta --head my-branch
+
+# RIGHT — owner-qualified head.
+gh pr create -R upstream/repo --base beta --head myaccount:my-branch
+```
+
+Check the fork's current branch name from git rather than assuming:
+`git branch --show-current`. Then read the PR back and confirm
+`headRepositoryOwner` is the fork and `baseRefName` is the merge target.
+
+#### Preflight the base is current BEFORE opening the PR
+
+A base that moved since your branch forked makes the PR open already
+`CONFLICTING`, and the conflict may be in files you never touched. Fetch the
+canonical base as an explicit ref (without checking it out) and compare:
+
+```bash
+git fetch <upstream-url> <base>:refs/remotes/canonical/<base> --force
+git rev-list --left-right --count canonical/<base>...HEAD   # "34 1" = base moved 34
+git diff --name-only HEAD...canonical/<base> -- <your files>
+```
+
+If only files you did NOT touch appear, merge the base in, resolve, then
+**re-run the full suite** — the merged tree is a different codebase, and a
+count from before the merge says nothing about it. Verify both sides of an
+import-block conflict survived (`grep -c` each symbol) rather than trusting the
+marker cleanup; two contributors each adding a `use` line is the common shape.
+
+#### `mergeable` and `mergeStateStatus` are different questions
+
+`CONFLICTING` means the merge cannot be applied as-is. `BLOCKED` does NOT —
+it usually means required checks are pending or a review is required. Read
+both, then confirm which with `gh pr checks`:
+
+```bash
+gh pr view N -R owner/repo --json number,state,mergeable,mergeStateStatus,baseRefName,headRefName,url
+gh pr checks N -R owner/repo
+```
+
+Never report "ready to merge" from `mergeable: MERGEABLE` alone while
+`mergeStateStatus: BLOCKED` — check whether the blocker is CI or approval, and
+say which.
+
 **With git + curl:**
 
 ```bash
@@ -195,6 +246,21 @@ for i in $(seq 1 20); do
   sleep 30
 done
 ```
+
+### Prefer `gh` for writes; fall back when a GitHub MCP tool errors
+
+If a deferred GitHub MCP tool returns an auth/permission error for a write you
+need, do not retry it in a loop and do not abandon the write. Confirm the CLI
+is usable (`gh auth status`) and do it with `gh` — it is usually authenticated
+from a different source than the MCP transport:
+
+```bash
+gh auth status
+gh pr create -R owner/repo --base beta --head owner:branch --title "..." --body-file <path>
+```
+
+For a long or Persian/right-to-left PR body, write it to a file first and pass
+`--body-file` rather than fighting shell quoting through `--body`.
 
 ## 5. Auto-Fixing CI Failures
 

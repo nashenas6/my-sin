@@ -38,7 +38,11 @@ Temporarily restore the old behavior of the exact function under test, run the n
 
 ### 7. Run repository quality gates, then open the PR immediately
 
-Run the formatter, lint, typecheck, and the repo's canonical test entrypoint on affected areas; use `requesting-code-review` on the diff. Then push and open the PR right away — the PR is what dispatches CI, and CI latency is the long pole; do not sit on finished work. Load `github-pr-workflow` for PR mechanics: conventional branch/commit, body linking the issue with problem, approach, tests, risk, and exclusions. Read the PR back and verify head SHA, base, title, and files. Done when the PR exists with the intended diff and CI is running.
+Run the formatter, lint, typecheck, and the repo's canonical test entrypoint on affected areas; use `requesting-code-review` on the diff. Then push and open the PR right away — the PR is what dispatches CI, and CI latency is the long pole; do not sit on finished work. Load `github-pr-workflow` for PR mechanics: conventional branch/commit, body linking the issue with problem, approach, tests, risk, and exclusions.
+
+Preflight the merge base before opening: a base that moved since your branch forked opens the PR already `CONFLICTING`, often in files you never touched. When the PR targets a base you do not own, `head` must be owner-qualified (`user:branch`). Read the PR back and verify head SHA, head owner, base ref, title, and files. Done when the PR exists with the intended diff and CI is running.
+
+If the base did move, merge it in and **re-run the full suite on the merged tree** — merging brings in other people's changes, so the count from before the merge describes a tree that no longer exists. Re-verify both sides of any hand-written conflict survived (see the merge-conflict section of `pr-workflow.md`).
 
 ### 8. Shepherd CI honestly and close the loop
 
@@ -52,6 +56,8 @@ Inspect live checks and failure logs via `gh pr checks` / `gh run view --log-fai
 - Shipping a regression test that also passes without the fix.
 - Opening a PR with unrun tests or unrelated formatting churn.
 - Claiming the issue is delivered because a PR exists.
+- Reporting a suite count from before a base-branch merge as evidence the merged tree is sound.
+- Rerunning a full-suite failure until it goes green instead of isolating it — an intermittent failure you cannot root-cause belongs in the PR body by name, not buried.
 
 ## Verification
 
@@ -61,4 +67,5 @@ Inspect live checks and failure logs via `gh pr checks` / `gh run view --log-fai
 - [ ] Regression test proven to fail without the fix.
 - [ ] Sibling call sites fixed or explicitly ruled out.
 - [ ] Every changed line traces to the issue.
+- [ ] Merge base was checked before opening; if it moved, the suite was re-run on the merged tree.
 - [ ] CI state reported from live evidence only; issue commented with the PR link.

@@ -123,6 +123,15 @@ PHP code changes, test writing, and API resource transformers.
       $model->update(['user_id' => Auth::id()]);
   }
   ```
+- **`Storage::fake()` takes one disk name, not an array.** `Storage::fake(['local','public'])`
+  throws `TypeError: getRootPath(): Argument #1 ($disk) must be of type string, array given`.
+  Call it once per disk: `Storage::fake('public'); Storage::fake('local');`. The error
+  surfaces as a `TypeError` inside the facade, which reads like a framework bug rather
+  than a bad argument.
+- **Assert the disk is empty, not only the status code.** For a route that writes a file,
+  pair the status assertion with `Storage::disk($d)->allFiles()` on every disk the
+  request could have chosen. A request that returns 404 can still have written something
+  earlier in a middleware chain.
 
 ## Extracting a Reusable Nested Component
 
@@ -175,6 +184,27 @@ These files are machine-generated — manual merge produces invalid output.
 **Never** edit phpstan-baseline.neon by hand to resolve conflicts.
 The regenerate step produces the correct baseline for the current code state.
 
+## Merge Conflicts in Hand-Written Files
+
+The inverse case — two contributors each appending to the same hand-maintained
+file, which is exactly what a shared doc table or a common service provider
+produces. Resolve by **keeping both sides**, not by picking a winner:
+
+1. Read the conflicted region and classify it. Two contributors each adding an
+   import line or a table row is an *additive* conflict: concatenate both,
+   keeping the file's existing ordering convention.
+2. After resolving, verify each side actually survived — `grep -c` every
+   symbol both sides contributed. Cleaning up markers proves nothing; a
+   dropped `use` line or a deleted doc row is silent until something breaks.
+3. Re-run the full quality gates on the merged tree. The merge brought in
+   other people's changes, so a passing suite from before the merge says
+   nothing about the tree you are now committing.
+
+Never resolve by `git checkout --ours` or `--theirs` on a hand-written file
+just because the conflict looks small — that silently discards a
+contributor's change, and for a shared provider or doc file the loss is not
+visible in your diff at all.
+
 ## Organisational scope on a Livewire page (multi-tenant read + write)
 
 When a page gates only a coarse permission (`manage_hardware`, `manage_personnel`)
@@ -208,6 +238,41 @@ scoped user create or promote one lets them write a record they can then
 neither edit nor delete — and hand themselves an org-wide side effect through a
 scoped form. Gate the write path on the same rule; keep the "no unit" option
 in the picker so existing org-wide rows stay viewable.
+
+8. **A package-registered route cannot be toggled off — strip it on `booted`, from inside a booted hook.** UI packages that call `loadRoutesFrom()` in their own `boot()` (maryUI does this) register routes the application never declared and cannot undeclare through config. Remove them by name from the router in `AppServiceProvider::boot()`. See "Removing a package-registered route" below — the two subtleties (compiled collections, hook ordering) each make the naive version silently do nothing.
+9. **A full-suite failure that passes in isolation is shared state, not your diff.** Do not assume it is yours, and do not "fix" it. Reproduce on the default branch with the same seed: `git stash push --include-untracked`, run, `git stash pop`. Note that adding or removing test files changes the execution order a seed produces, so "same seed passed on beta" is only comparable when the file set is identical. Report an unrooted flake by name in the PR body rather than silently rerunning until green.
+
+## Removing a package-registered route
+
+A vendor package's `ServiceProvider::boot()` calling `loadRoutesFrom()` registers
+routes the app never declared, and no config flag removes them. Strip by route
+name from the router instead:
+
+```php
+$this->app->booted(function () {
+    // Registered from INSIDE a booted callback — see below.
+    $this->app->booted(fn () => VendorRouteGuard::strip(
+        $this->app->make(Router::class),
+        'vendor.package.route'
+    ));
+});
+```
+
+Two traps make the obvious version a silent no-op:
+
+- **`route:cache` makes mutating a Route useless.** Cached routes produce a `CompiledRouteCollection` whose `match()` reads a flat, pre-built index and whose Route objects are instantiated fresh from `$attributes` on *every* call. Editing one changes nothing about what matches. Rebuild the collection without the target and re-`compile()` it, which regenerates both halves of `setCompiledRoutes()`. Handle both collection shapes (`RouteCollection` and `CompiledRouteCollection`) in the guard — the uncached rebuild is a few lines, but the cached path is the one that gets skipped and the bug ships.
+- **A hook registered straight from `boot()` runs too early.** Routes are themselves populated by booted callbacks (`AppRouteServiceProvider`, plus the `require` of the cached route file), so your hook can fire before the vendor route exists. `Application::fireAppCallbacks()` re-checks the callback count each pass, so nesting one `booted()` inside another is what places yours last on both the cached and uncached paths.
+
+Test all three states, not just the default one: uncached, freshly
+`route:cache`d, and a **stale cache built by the pre-fix code** (build it by
+stashing the fix, then `route:cache`). The stale case is the one that
+represents an already-deployed app, and it is the only one that proves the
+hook ordering. Verify with `php artisan route:list --path=<uri>` under each.
+
+Keep the package's *other* routes. A layout component calling
+`route('vendor.package.other')` on every render means removing it 500s every
+page — check the routes against actual view usage before stripping, and pin the
+survivors in a test so a later "cleanup" does not take them.
 
 ## Testing Patterns
 
