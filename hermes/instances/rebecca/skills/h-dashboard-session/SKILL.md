@@ -232,6 +232,51 @@ The `using-superpowers` bootstrap is injected only on the **first turn** of a se
 lost it — that is the known failure mode, not a broken install. `AGENTS.md` above
 repeats the load-bearing rules so they survive compaction.
 
+## 8b. Composer/Pint traps that cost a full suite run to discover
+
+- **`composer pint` can silently rename a method under you.** Pint's
+  `php_unit_method_casing` rewrites any method whose name starts with `test`
+  to snake_case — *including a private helper*. A `private function
+  testEnvFile()` became `test_env_file()` while every `$this->testEnvFile()`
+  call site stayed camelCase, so six tests died with `Call to undefined method`
+  in the FULL suite, long after `composer pint` reported `{"result":"fixed"}`.
+  Never name a non-test method `test*` in a PHPUnit class. Pinned by
+  `test_no_test_helper_starts_with_the_word_test` in
+  `tests/Feature/AppKeyGuardWiringTest.php`.
+- **Never assert Pest's summary wording.** Two traps stacked:
+  (1) CI runs PHP 8.5 where a PDO deprecation makes Pest print
+  `Tests: 10 deprecated (…)`, not `10 passed`, so `/passed/` alone fails in CI
+  while passing locally; (2) Pest **colourises** the summary, so the number and
+  the word are separated by ANSI escapes, not whitespace —
+  `"\x1b[90mTests:\x1b[39m    \x1b[32;1m10 passed\x1b[39;22m…"`, so even
+  `/Tests:\s+10 (passed|deprecated)/` fails until you
+  `preg_replace('/\e\[[0-9;]*m/', '', $output)`. When you need a count, strip
+  ANSI first and accept `passed|deprecated`; `VerifyWrapperScriptTest` records
+  the same trap and calls naming the file "environment-blind". When a
+  sub-process assertion must hold on BOTH machines, check the pattern against
+  both real strings in a scratch probe — a green local run proves nothing about
+  the CI wording.
+- **When CI fails on a test you just wrote, read the job log before assuming
+  the code is wrong.** `gh api .../logs` returns an empty body unless you send
+  `Accept: application/vnd.github.v3.raw`; then:
+  `curl -sL ".../actions/jobs/<id>/logs" -H "Authorization: Bearer $(gh auth token)" -H "Accept: application/vnd.github.v3.raw" -o log`
+- **`git add` on a file a script rewrites sweeps the generated value in.** After
+  #953, `git add .env.testing` captured the per-clone key `composer test` had
+  just written. Blank → `git add` → restore, and verify with
+  `git show :FILE | grep APP_KEY`, never with a working-tree grep.
+- **A guard must run in both `scripts/verify.sh` AND the CI `lint` job.**
+  `verify.sh` never runs in CI (jobs are `lint`, `test`, `coverage-report`,
+  `mutation`, `phpstan`), so a guard living only there fails no job.
+- **A git-based guard reads the INDEX, not the working tree**, or it fails on
+  a correct machine the first time a script generates a per-clone value. Test
+  the negative case explicitly. Use `GIT_INDEX_FILE` on a copy when a test
+  needs to stage into the real repo — never touch the real index.
+- **`php artisan migrate --env=testing` does NOT migrate the test database.**
+  It loads `.env.testing`, whose `DB_DATABASE` is `h_dashboard`. For
+  `h_dashboard_test` use `DB_DATABASE=h_dashboard_test php artisan migrate`
+  (confirm with `php artisan verify:preflight`). "Nothing to migrate" against
+  a fresh database is the tell.
+
 ## 9. Docs and audit skills
 - `read-the-damn-docs` (software-development/read-the-damn-docs) — read official/current
   docs before implementing against any third-party API or library. Context7 MCP for
