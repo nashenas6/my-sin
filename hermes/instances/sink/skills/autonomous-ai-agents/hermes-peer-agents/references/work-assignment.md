@@ -199,7 +199,7 @@ Strip ZWNJ and friends from the finished file before any `hermes cron create`
 One prompt file per peer, then:
 
 ```bash
-scripts/peer-dm-batch.sh kimya:/path/msg-a.txt sevda:/path/msg-b.txt
+scripts/peer-dm-batch.sh farnaz:/path/msg-a.txt
 ```
 
 Run it `background=true, notify=true` — a peer doing real work answers in
