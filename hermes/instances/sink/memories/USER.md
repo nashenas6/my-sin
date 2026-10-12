@@ -1,4 +1,4 @@
-User prefers to call the assistant "سینک" (Sink) instead of Hermes.
+User prefers to call the assistant "سينک" (Sink) instead of Hermes.
 §
 On this box origin = nashenas6/h-dashboard
 §
