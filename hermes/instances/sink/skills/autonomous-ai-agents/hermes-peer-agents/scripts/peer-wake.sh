@@ -8,16 +8,16 @@
 # This script is fail-CLOSED: if `gh run list` errors for a peer, that peer is
 # NOT dispatched — an unreadable state is treated as "maybe awake".
 #
-# Usage:  scripts/peer-wake.sh [peer ...]      (default: all five)
-# Env:    GH_OWNER (default Shabakebehdasht), PEER_REPO (default my-rey)
+# Usage:  scripts/peer-wake.sh [peer ...]      (default: all peers)
+# Env:    GH_OWNER (default nashenas6), PEER_REPO (default my-sin)
 #
 # Exit 0 = every requested peer is now booting or already awake.
 # Exit 1 = gh failed, or a dispatch did not land.
 set -uo pipefail
 
-owner="${GH_OWNER:-Shabakebehdasht}"
-repo="${PEER_REPO:-my-rey}"
-all=(kimya sevda sonia kylie rebecca)
+owner="${GH_OWNER:-nashenas6}"
+repo="${PEER_REPO:-my-sin}"
+all=(farnaz)
 peers=("$@")
 [ ${#peers[@]} -eq 0 ] && peers=("${all[@]}")
 
