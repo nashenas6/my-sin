@@ -14,7 +14,7 @@ metadata:
 
 ## When to Use
 
-The user names a peer agent (Kimya, Sevda, Sonia, Kylie, or anything in
+The user names a peer agent (Farnaz, or anything in
 `hermes peer list`) and asks to wake it, start it, message it, or send it
 something once it is up. Also use when the user hands over a specific
 `my-*` GitHub Actions workflow to run for an agent.
@@ -28,13 +28,13 @@ Peer inventory (peer → repo → workflow file) lives in
 - **One run per peer, ever.** A peer workflow run is a whole machine: it
   claims the tailscale hostname and syncs `hermes/` state back to the repo at
   shutdown. Two concurrent runs OF THE SAME PEER collide. All peer workflows
-  live in one repo (`Shabakebehdasht/my-rey`), so filter by workflow NAME, not
-  by repo: `gh run list -R Shabakebehdasht/my-rey --json name,status` — a run
-  of `kimya.yml` says nothing about `kylie.yml`. `scripts/peer-run-state.sh`
+  live in one repo (`nashenas6/my-sin`), so filter by workflow NAME, not
+  by repo: `gh run list -R nashenas6/my-sin --json name,status` — a run
+  of `farnaz.yml` says nothing about `sink.yml`. `scripts/peer-run-state.sh`
   already does this filtering. Before ANY dispatch (including inside a
   scheduled job) check run state; if that peer's own run is already
   `in_progress`, do NOT dispatch — the peer is already awake. An in-progress
-  `reyhane` run is this orchestrator's own machine, not a peer conflict.
+  `sink` run is this orchestrator's own machine, not a peer conflict.
 - **A deferred job must never re-dispatch a wake.** When the wake already
   happened in this conversation, the scheduled job's prompt is DM-only. Give
   the job the message text and the peer names, never `gh workflow run`.
@@ -70,7 +70,7 @@ by a check that it is currently off.**
 
 ```bash
 bash scripts/peer-run-state.sh                       # conflicts first
-bash scripts/peer-wake.sh [peer ...]                 # default: all five
+bash scripts/peer-wake.sh [peer ...]                 # default: all peers
 ```
 
 Invoke these with `bash <path>`. They are shipped without the executable bit, so
@@ -93,16 +93,11 @@ The workflow file `on:` block is `workflow_dispatch:` ONLY — nothing else
 re-triggers these runs, so a run you did not dispatch still needs explaining
 (check `event` and `actor` with `gh api .../actions/runs/<id>`).
 
-**Exception: `rebecca.yml` also has `schedule: cron '0 */6 * * *'`.** All five
-peer workflows set `timeout-minutes: 340`, deliberately under the 6h
+All peer workflows set `timeout-minutes: 340`, deliberately under the 6h
 GitHub-hosted-runner limit (360 min), so a peer always self-terminates and
-freed its tailscale hostname (`if: always()` steps 16 & 17 sync `hermes/`
+frees its tailscale hostname (`if: always()` steps 16 & 17 sync `hermes/`
 state back and run `tailscale logout`) with ~20 min of headroom. Since 340 <
-360, a peer can never outlive the runner, so rebecca's cron does cycle her
-off/on normally. A cron tick can still land inside a live run (GitHub delays
-top-of-the-hour schedules by tens of minutes); the `concurrency` group then
-makes it wait as `pending` and start right after — back-to-back instead of a
-clean gap, but never two machines. Not worth changing; do not shorten the cron.
+360, a peer can never outlive the runner.
 
 Never raise `timeout-minutes` toward 360: past it the runner is killed
 outright, the `if: always()` cleanup steps do NOT get their headroom, and the
@@ -313,7 +308,7 @@ assertion and the named root cause.
 
 When you hand a peer a correction (wrong PR target, stacked branch, reopened
 scope), put the *observable* fact and the exact remedy in the message rather
-than a verdict — "your PR #10 is in Shabakebehdasht/h-dashboard, and
+than a verdict — "your PR #10 is in nashenas6/h-dashboard, and
 `gh pr list -R asgarimehdi/h-dashboard --head fix/894-per-page-422` is empty;
 open it with `-R asgarimehdi/h-dashboard --base beta`" lets the peer verify and
 fix it in one turn, where "your PRs are in the wrong repo" costs it a
@@ -551,11 +546,11 @@ merged ref with `git diff <old-base>..<new-base> -- <path>`. A content grep
 against your own checkout gives a FALSE NEGATIVE here — your local copy may
 predate the merge — which is how a landed doc commit reads as missing.
 
-### Peer repos do not exist — everything is in `my-rey`
+### Peer repos do not exist — everything is in `my-sin`
 
-The per-peer repos (`my-kim`, `my-sev`, `my-son`, `my-kyl`) return HTTP 404;
-all four peer workflows are in `Shabakebehdasht/my-rey`. A command like
-`gh run list -R Shabakebehdasht/my-kim` fails with a 404 that reads like an
+There are no per-peer repos; the peer workflow lives in `nashenas6/my-sin`
+next to this orchestrator's own. A command like
+`gh run list -R nashenas6/my-far` fails with a 404 that reads like an
 auth failure, and `peer-run-state.sh` will "safely" pass because it skips
 errored repos. Verify the repo exists before trusting any check:
 `gh repo list <owner> --limit 100 --json name` and
@@ -570,7 +565,7 @@ and keep the older one running (the older already holds the hostname and is
 further along):
 
 ```bash
-gh run cancel <newer-run-id> -R Shabakebehdasht/my-rey
+gh run cancel <newer-run-id> -R nashenas6/my-sin
 ```
 
 `gh run cancel` is asynchronous — the run still reports `in_progress` for a
@@ -623,7 +618,7 @@ When prompts are generated by code, the shared standing block is the first
 thing to go missing — a variable is defined, the per-peer loop forgets to
 concatenate it, and every file still writes successfully at a plausible size.
 Sending that batch strips the branch rules, the PR conventions and the merge
-prohibition from all five peers at once, and nothing in the DM reply reveals it.
+prohibition from all peers at once, and nothing in the DM reply reveals it.
 Cheapest gate before firing:
 
 ```bash
