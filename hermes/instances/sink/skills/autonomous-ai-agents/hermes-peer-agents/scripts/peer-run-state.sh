@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 # Report active workflow runs for every peer workflow and flag conflicts.
 #
-# ALL peer workflows live in ONE repo: Shabakebehdasht/my-rey (kimya.yml,
-# sevda.yml, sonia.yml, kylie.yml). The old per-peer repos (my-kim, my-sev,
-# my-son, my-kyl) return 404 — do not reintroduce them.
+# ALL peer workflows live in ONE repo: nashenas6/my-sin (farnaz.yml).
+# There are no per-peer repos — do not reintroduce them.
 #
 # A peer machine must have AT MOST ONE in_progress run of ITS OWN workflow: the
 # run holds the tailscale hostname and syncs hermes/ state back to the repo at
 # shutdown, so two concurrent runs of the same workflow collide. Different
-# peers are different machines and may run at the same time. `reyhane` is this
-# orchestrator's own workflow — an in_progress reyhane run is normal.
+# peers are different machines and may run at the same time. `sink` is this
+# orchestrator's own workflow — an in_progress sink run is normal.
 #
 # Exit 0 = no peer workflow has more than one in_progress/queued run.
 # Exit 1 = conflict found (the offending workflow is printed).
@@ -17,10 +16,10 @@
 # Usage: scripts/peer-run-state.sh
 set -uo pipefail
 
-owner="${GH_OWNER:-Shabakebehdasht}"
-repo="${PEER_REPO:-my-rey}"
+owner="${GH_OWNER:-nashenas6}"
+repo="${PEER_REPO:-my-sin}"
 # peer workflow names — keep in sync with references/peer-registry.md
-peers=(kimya sevda sonia kylie rebecca)
+peers=(farnaz)
 
 conflicts=0
 runs=$(gh run list -R "$owner/$repo" -L 20 \
