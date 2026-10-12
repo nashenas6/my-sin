@@ -1,7 +1,7 @@
 #!/bin/bash
 # Deliver a prompt file to each peer. One offline peer must not abort the batch.
 #
-# Usage: peer-dm-batch.sh kimya:/path/msg-a.txt sevda:/path/msg-b.txt ...
+# Usage: peer-dm-batch.sh farnaz:/path/msg-a.txt ...
 # Or read `peer:prompt-file` pairs from stdin, one per line.
 #
 # Run this with background=true + notify=true: a peer doing real work can take
