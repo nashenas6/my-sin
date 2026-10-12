@@ -4,13 +4,11 @@ Mapping from peer name (as registered with `hermes peer`) to the GitHub repo
 and workflow file that wakes it. A peer is reachable only while its workflow
 run is alive.
 
-**All peer workflows live in ONE repo: `Shabakebehdasht/my-rey`** (default
-branch `reyhane` — the ONLY branch in the repo; never assume `beta`). The
-per-peer repos `my-kim`, `my-sev`, `my-son`, `my-kyl` do NOT exist (HTTP 404)
-— every `-R Shabakebehdasht/my-kim` style command fails. Use `-R
-Shabakebehdasht/my-rey` for all four. `my-rey` also holds `reyhane.yml` and
-`rebecca.yml`; `reyhane` is this orchestrator machine's own workflow, so an
-`in_progress` `reyhane` run is normal and is not a peer conflict.
+**All peer workflows live in ONE repo: `nashenas6/my-sin`** (default
+branch `sink` — the ONLY branch in the repo; never assume `beta`). There are
+no per-peer repos — every command uses `-R nashenas6/my-sin`. The repo also
+holds `sink.yml`; `sink` is this orchestrator machine's own workflow, so an
+`in_progress` `sink` run is normal and is not a peer conflict.
 
 **Every peer workflow already carries a single-run server guard:**
 
@@ -39,34 +37,28 @@ cancels the pending one and replaces it. The machine is never double-booted —
 the invariant that matters — but a wake request can be dropped, so after
 queueing, re-read the peer's runs to confirm which request is the surviving
 `pending` one. `github.workflow` in the group name is the workflow's `name:`
-(`kimya`, `rebecca`, …), so the five peers never share a group with each
-other.
+(`sink`, `farnaz`), so the peers never share a group with each other.
 
 Do not re-run the probe by hand; use `scripts/peer-wake.sh`, whose verification
 step already reports the run id that actually landed.
 
-Caveat: these files are RemoteHermes-managed ("template v1, regenerated on
+Caveat: these files are RemoteHermes-managed ("template v2, regenerated on
 Update; manual edits are overwritten"). After any RemoteHermes Update, re-check
 that the `concurrency:` block is still present and re-add it if not.
 
 | Peer | Repo | Workflow |
 |---|---|---|
-| kimya | `Shabakebehdasht/my-rey` | `kimya.yml` |
-| sevda | `Shabakebehdasht/my-rey` | `sevda.yml` |
-| sonia | `Shabakebehdasht/my-rey` | `sonia.yml` |
-| kylie | `Shabakebehdasht/my-rey` | `kylie.yml` |
-| rebecca | `Shabakebehdasht/my-rey` | `rebecca.yml` |
+| farnaz | `nashenas6/my-sin` | `farnaz.yml` |
 
-**`rebecca.yml` also has a `schedule:` cron (`0 */6 * * *`)** — the only peer
-workflow that re-triggers itself. So a `rebecca` run can appear without you
-dispatching it; that is normal, not a double dispatch.
+**No peer workflow in this account has a `schedule:`** — every peer run is
+a manual dispatch, so a `farnaz` run you did not dispatch needs explaining.
 
 Batch wake — always through the script, never a bare `gh workflow run`:
 
 ```bash
-scripts/peer-wake.sh              # all five; skips any that is already up
-scripts/peer-wake.sh kimya sevda  # or a subset
-gh run list -R Shabakebehdasht/my-rey --limit 10 --json databaseId,name,status,url
+scripts/peer-wake.sh              # all peers; skips any that is already up
+scripts/peer-wake.sh farnaz       # or a subset
+gh run list -R nashenas6/my-sin --limit 10 --json databaseId,name,status,url
 ```
 
 ## Adding a peer
