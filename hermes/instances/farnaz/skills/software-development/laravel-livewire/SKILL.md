@@ -265,6 +265,43 @@ with the live schema, session-mutating helpers) are in
   }
   ```
 
+## Sidebar Active State: MaryUI `activate-by-route` Matches STRING Prefixes
+
+`<x-menu activate-by-route>` delegates to `MenuItem::routeMatches()` in
+`vendor/robsontenorio/mary/src/View/Components/MenuItem.php`. Its rule is
+exact URL equality first, then `Str::startsWith($currentUrl, $link)` — skipped
+only when the item sets `exact`, and for the `/` root link. It is **not**
+segment-aware, so neighbouring hrefs highlight each other:
+
+| Current page | Also highlighted (wrong) |
+|---|---|
+| `/maps/unit`, `/maps/route`, `/maps/route2`, `/maps/county`, `/maps/point` | `/map` |
+| `/maps/route2` | `/maps/route` |
+| `/users/changepassword` | `/users` |
+
+Symptoms: clicking one menu item colours a *different* one (`mary-active-menu
+bg-base-300` on the wrong `<a>`, plus a wrong `aria-current="page"` — an
+accessibility bug, not only a colour bug). A coloured **section header** is not
+this bug: `MenuSub` deliberately colours its `<summary>` when the rendered slot
+contains the string `mary-active-menu` (`Str::contains($slot, 'mary-active-menu')`).
+
+Rules:
+
+1. Read `routeMatches()` in the **installed** vendor version before reasoning
+   about active state — it is prefix-based, and "it looks like a route-name
+   comparison" is the wrong mental model.
+2. Before adding a sidebar link, check it is not a string prefix of (or prefixed
+   by) another sidebar href. Enumerate from the DOM rather than clicking every
+   page: collect all `ul.menu a[href]` and list pairs where `b.startsWith(a)`.
+3. `:exact="true"` fixes a single collision but is brittle and drops the
+   highlight on detail pages (`/units/5` should keep `/units` lit). Prefer
+   passing a computed `:active` per item with a segment-boundary rule: exact URL
+   match, or `Str::startsWith($url, $link.'/')`.
+4. Pin it with an E2E test that loads the colliding URLs and asserts exactly ONE
+   `a.mary-active-menu` on each, and that `aria-current` sits on the right link.
+   An active-state spec that only visits collision-free pages (a standalone item
+   and a top-level list page) cannot catch this and stays green.
+
 ## Measuring Livewire Cost Before Claiming a Perf Finding
 
 Never file or fix a Livewire perf finding from reading code alone — quantify it.

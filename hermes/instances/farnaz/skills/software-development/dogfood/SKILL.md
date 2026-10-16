@@ -29,6 +29,32 @@ The user provides:
 2. **Scope** — what areas/features to focus on (or "full site" for comprehensive testing)
 3. **Output directory** (optional) — where to save screenshots and the report (default: `./dogfood-output`)
 
+## Phase 0: Confirm the App Serves, and Get an Authenticated Session
+
+1. **Prove the app answers before blaming your automation.**
+   `curl -s -o /dev/null -w '%{http_code}\n' <url>`. A 500 is a server defect, not a
+   UI finding: report it, fix the environment, then start the QA pass.
+2. **Read the FIRST error, not the last.**
+   `grep -nE 'local\.(ERROR|CRITICAL)' storage/logs/laravel.log | head -5`. Laravel's
+   later entries are usually cascading `Cannot modify header information - headers
+   already sent`, which names the symptom and never the cause. For this stack the
+   classic first error is a missing key — "No application encryption key has been
+   specified" → `php artisan key:generate` (generate one per clone; never copy a key
+   out of another env file or repo).
+3. **Behind a login wall, get a session without handling credentials.** Check
+   `browser_vault` (action=list) first. If nothing is saved there, do not type or ask
+   for a password: for a **local** app, bootstrap the session server-side — see
+   `templates/laravel-probe-login-route.php` for the temporary, environment-gated,
+   nonce-guarded route, the curl verification, and the cleanup commands.
+4. **A new route 404s while `bootstrap/cache/routes-v7.php` exists.** Run
+   `php artisan route:clear` before pointing the browser at the probe URL.
+5. **Log in as an account that already exists** (admin, so every menu and gate is
+   reachable) rather than inventing one. If a throwaway account is unavoidable, give
+   it a fixed name prefix so cleanup is one DELETE, and remove it before reporting.
+6. **Clean up and prove it.** Delete the probe route, `php artisan route:clear`, then
+   `git status --short` — only pre-existing modifications may remain, and the report
+   should say so.
+
 ## Workflow
 
 Follow this 5-phase systematic workflow:
@@ -152,6 +178,12 @@ Save the report to `{output_dir}/report.md`.
 | `browser_vision` | Screenshot + AI analysis; use `annotate=true` for element labels |
 | `browser_console` | Get JS console output and errors |
 
+Use whichever browser tool the environment actually exposes — for example
+`browser_exec(code=...)` with pre-imported helpers (`new_tab`, `goto_url`, `js`,
+`page_info`, `wait_for_load`, `fill_input`). Work **text-first**: `js()` returns DOM
+values (class lists, `href`, `innerText`) that are exact evidence, while a screenshot
+path is only useful if the analysing model can see images.
+
 ## Tips
 
 - **Always check `browser_console()` after navigating and after significant interactions.** Silent JS errors are among the most valuable findings.
@@ -162,3 +194,17 @@ Save the report to `{output_dir}/report.md`.
 - **Check responsive behavior** by noting any layout issues visible in screenshots.
 - **Don't forget edge cases**: empty states, very long text, special characters, rapid clicking.
 - When reporting screenshots to the user, include `MEDIA:<screenshot_path>` so they can see the evidence inline.
+- **Keep one reusable `dump()` helper** that walks the candidate elements and returns
+their `href`/`innerText`/`className`, then reuse it on every page. Class-list dumps are
+reproducible evidence; ad-hoc picks are not.
+- **For a state bug ("clicking A changes B"), enumerate the candidate set in ONE DOM
+pass** — collect every sidebar link (or table row) with its classes, then compute the
+conflicting pairs in Python before opening anything. Then load the two or three URLs
+that should differ and confirm. Clicking page-by-page is the slow path, and the pair
+list it produces is what makes the report conclusive.
+- **Quote the exact attribute value** in the report (`class="... mary-active-menu
+bg-base-300"`, plus a wrong `aria-current="page"` if present). A wrong active marker is
+an accessibility bug as well as a visual one — say both.
+- **Check whether a test already covers the state you are reporting** (e.g. an E2E
+active-state spec). If it passes while the bug is live, name the gap — the pages it
+visits — so the fix can be pinned rather than just described.

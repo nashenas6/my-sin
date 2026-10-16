@@ -123,6 +123,13 @@ Delete probe files when the probe is finished; keep durable ones out of the repo
 under an ignored path. Run `git status` immediately before staging, not just at the
 start of the session.
 
+The same applies to **edits to tracked files made for a probe** — a temporary
+login/debug route in `routes/web.php`, a debug hook in a middleware. Revert the
+edit and confirm with `git status --short` that only the pre-existing
+modifications remain (and say so in the report). Clear any cache the probe
+required (`php artisan route:clear`, `config:clear`, `view:clear`) on the way out,
+or the app keeps serving the probe after the code is gone.
+
 ### Tool wrappers blocked by a lifecycle/size guard
 
 A `vendor/bin/*` shim can be rejected by the agent gateway with a message about
@@ -172,6 +179,29 @@ git rev-parse HEAD^{tree} refs/remotes/upstream/<branch>^{tree}   # must match
   `git push origin HEAD:refs/heads/<branch> --force`. A bare `git push` follows
   `branch.<name>.merge`, which may point at a *different* branch on the fork.
 - Verify with `git ls-remote origin` and `git diff HEAD origin/<branch>` (empty = identical).
+
+### Fast-forwarding a work branch from its base with a dirty working tree
+
+Syncing a server working branch from `beta` while local edits exist (lock files,
+dependency bumps) is safe as long as you check the overlap **before** merging:
+
+```bash
+git fetch <remote>                      # fetch BOTH remotes when two of them
+                                        # alias the same repo, then prove it:
+git rev-parse <fork>/beta <origin>/beta # identical SHA = one source of truth
+git rev-list --left-right --count <branch>...<fork>/beta   # "0\tN" = pure FF
+
+git diff --name-only <branch> <fork>/beta                  # files arriving
+git diff --name-only <branch> <fork>/beta | grep -E '^(composer.lock|package-lock.json)$'
+
+git merge --ff-only <fork>/beta         # refuses if an incoming file is dirty
+```
+
+An empty overlap means the fast-forward lands and the local edits survive
+untouched. A non-empty overlap means `--ff-only` refuses — **stop and report**
+instead of stashing or committing someone else's uncommitted edits to get past
+it. After merging, the branch is ahead of the fork; do not push unless asked, and
+when asked push the explicit refspec (`git push <remote> HEAD:refs/heads/<branch>`).
 
 ## Verification
 
