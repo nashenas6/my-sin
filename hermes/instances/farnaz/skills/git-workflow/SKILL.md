@@ -150,6 +150,29 @@ git config user.name "username"
 
 Detect from `gh auth status` or set manually.
 
+### Mirroring a branch exactly onto upstream and the fork
+
+When asked to make a branch "exactly like" an upstream branch head (and force the
+fork), do not merge or cherry-pick — reset and prove equality by **tree hash**:
+
+```bash
+git fetch <upstream-url> <branch>:refs/remotes/upstream/<branch> --force
+git rev-list --left-right --count HEAD...refs/remotes/upstream/<branch>  # ahead/behind first
+git reset --hard refs/remotes/upstream/<branch>
+git clean -fd                       # untracked, NOT -x: keeps .env/vendor/node_modules
+git rev-parse HEAD^{tree} refs/remotes/upstream/<branch>^{tree}   # must match
+```
+
+- `git rev-list` stays valid when `git diff` is huge; `0\tN` means no unique commits, so the
+  reset discards nothing.
+- `git clean -x` would delete gitignored `.env`, `vendor/`, `node_modules/` and break the app —
+  those files are not part of the branch. Use `git status --porcelain --ignored=matching` to see
+  what is being kept, and say so in the report.
+- Push with **explicit refspecs**, one per branch, and create missing branches by pushing to them:
+  `git push origin HEAD:refs/heads/<branch> --force`. A bare `git push` follows
+  `branch.<name>.merge`, which may point at a *different* branch on the fork.
+- Verify with `git ls-remote origin` and `git diff HEAD origin/<branch>` (empty = identical).
+
 ## Verification
 
 - `git status` shows no unexpected submodule entries.
